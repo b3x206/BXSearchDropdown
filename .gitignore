@@ -1,10 +1,13 @@
 # Resources only - ignore everything
 # *
-# 
+# !readme.md
 # !/Resources/*
 # !/[Rr]esources/typeselector.png
 # !/[Rr]esources/keycodeselector.png
 # !/[Rr]esources/vsnormal.gif
 # !/[Rr]esources/vsadvanced.gif
-# ---
+# !/[Rr]esources/easeselector.gif
+---
 # Does not work, just don't put file outside of resource ¯\_(ツ)_/¯
+
+*.meta
