@@ -6,25 +6,30 @@ Features:
 * Async searching, typing a query doesn't block the main editor thread.
 * Basic string normalization and result sorting.
 * Override GUI behavior and bind extra data per `SearchDropdownElement`
-* Faster, more modular and open source
+* Faster and more modular
 
 ### Compatibility
-Works with Unity Version >=2021.3. <br/>
-Please note that some versions of Unity 6 may have bugs related to IMGUI. If you encounter this, please downgrade or upgrade to a version that works.
+Works with Unity Version **>=2021.3**. <br/>
+Please note that some versions of **Unity 6** may have bugs related to IMGUI (such as **0.52f**). If you encounter this, please downgrade or upgrade to a version that works.
 
 ## Demo
 
 **TypeSelectorDropdown** <br/>
-![](./Resources/typeselector.png)
+![](https://github.com/b3x206/BXSearchDropdown/blob/resource/Resources/typeselector.png?raw=true)
 
 **KeyCodeSelectorDropdown** (with a query showing the sorting) <br/>
-![](./Resources/keycodeselector.png)
+![](https://github.com/b3x206/BXSearchDropdown/blob/resource/Resources/keycodeselector.png?raw=true)
 
 **Compared to normal dropdown** <br/>
-![](./Resources/vsnormal.gif)
+![](https://github.com/b3x206/BXSearchDropdown/blob/resource/Resources/vsnormal.gif?raw=true)
 
 **Compared to `AdvancedDropdown`** (on many elements/items) <br/>
-![](./Resources/vsadvanced.gif)
+<sub>the delay on the `BXSearchDropdown` at start is me thinking what to query</sub>
+![](https://github.com/b3x206/BXSearchDropdown/blob/resource/Resources/vsadvanced.gif?raw=true)
+
+**Ease Selector^** <br/>
+![](https://github.com/b3x206/BXSearchDropdown/blob/resource/Resources/easeselector.gif?raw=true)
+^ to get the plotting GUI for the ease selector, you can use this gist: https://gist.github.com/b3x206/9f2373d080353ea03d178afaac639cac
 
 ## Basic Usage
 You can replicate or inspect these code snippets to get started:
@@ -32,9 +37,8 @@ You can replicate or inspect these code snippets to get started:
 ### ./Scripts/Editor/ExampleDropdown.cs
 ```cs
 // Assembly-CSharp-Editor
-using UnityEngine;
-using UnityEditor;
 using BX.Editor;
+using System;
 
 public class ExampleDropdown<T> : SearchDropdown<T> where T : ISearchDropdownWindow, new()
 {
@@ -44,7 +48,7 @@ public class ExampleDropdown<T> : SearchDropdown<T> where T : ISearchDropdownWin
         // Though a constructor definition (to call any of the base constructor with string) is necessary.
         public readonly float extraData;
 
-        public Item(float extraData) : base($"{extraData} <color=#a8d799> | {((long)extraData):X}</color>")
+        public Item(float extraData) : base($"{extraData} <color=#a8d799> | {(BitConverter.SingleToInt32Bits(extraData)):X}</color>")
         {
             this.extraData = extraData;
         }
@@ -54,6 +58,8 @@ public class ExampleDropdown<T> : SearchDropdown<T> where T : ISearchDropdownWin
         }
     }
 
+    public override bool AllowRichText => true;
+
     protected override SearchDropdownElement BuildRoot()
     {
         // Create a root element to return
@@ -62,7 +68,11 @@ public class ExampleDropdown<T> : SearchDropdown<T> where T : ISearchDropdownWin
         {
             // Any element can be started as a c# collection
             new SearchDropdownElement("Child 1"),
-            new SearchDropdownElement("Child 2"),
+            new SearchDropdownElement("Child 2")
+            {
+                new Item(9f + 10f, "21"),
+                new Item(float.MaxValue)
+            },
             new SearchDropdownElement("Child 3")
             {
                 // Every child can have it's own values and so on...
@@ -77,7 +87,7 @@ public class ExampleDropdown<T> : SearchDropdown<T> where T : ISearchDropdownWin
         // The children can be also systematically be added using SearchDropdownElement.Add()
         // Basically a 'SearchDropdownElement' is an ICollection of 'SearchDropdownElement'
         // Which technically is a tree data type. (or not, you are reading the sample written by the guy who failed DSA after all)
-        
+
         // Return the root after creating it, this is required as a part of the abstract class 'SearchDropdown'.
         return root;
     }
@@ -125,7 +135,7 @@ public class SampleClassEditor : Editor
         {
             ExampleDropdown<UGUISearchDropdownWindow> dropdown = new();
             dropdown.Show(lastRepaintDropdownParentRect);
-            dropdown.OnElementSelectedEvent += (SearchDropdownElement element) =>
+            dropdown.OnElementSelected += (SearchDropdownElement element) =>
             {
                 // Will not take a 'SerializedProperty' inside a delegate
                 // Because SerializedObject and SerializedProperty disposes automatically after the OnGUI call
@@ -137,7 +147,7 @@ public class SampleClassEditor : Editor
                 // You can create custom Element/Item classes that inherit from 'SearchDropdownElement' and type test it to get it's values.
                 // With this, you can test/unbox the type like `if (element is ExampleDropdown<UGUISearchDropdownWindow>.Item item)` and get the extra data.
                 // For now we are just assigning the content text set to the element for simplicity.
-                target.dropdownSettingString = element.content.text;
+                target.dropdownSettingString = element.content.Text;
             };
         }
         // Get the last rect for getting the proper value
@@ -159,9 +169,10 @@ You can also optionally create an attribute + `CustomPropertyDrawer` for the dro
 ### ./Scripts/SampleTargetAttribute.cs
 ```cs
 using System;
+using UnityEngine;
 
 [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
-public class SampleTargetAttribute : Attribute { }
+public class SampleTargetAttribute : PropertyAttribute { }
 ```
 
 ### ./Scripts/Editor/SampleTargetPropertyDrawer.cs
@@ -215,9 +226,9 @@ public class SampleTargetPropertyDrawer : PropertyDrawer
 
                 SerializedObject copySo = new SerializedObject(property.serializedObject.targetObjects);
                 SerializedProperty copySetProperty = copySo.FindProperty(property.propertyPath);
-                selector.OnElementSelectedEvent += (SearchDropdownElement element) =>
+                selector.OnElementSelected += (SearchDropdownElement element) =>
                 {
-                    copySetProperty.stringValue = item.content.Text;
+                    copySetProperty.stringValue = element.content.Text;
                     copySo.ApplyModifiedProperties();
 
                     copySetProperty.Dispose();
@@ -251,6 +262,10 @@ public class SampleClassFieldAttr : MonoBehaviour
 }
 ```
 
+For more examples, check [the Dropdown directory](./Dropdown/)
+
 ## TODO
+* [ ] Allow adding of extra GUI/callback on the header/post draw list
+* [ ] Decouple the backing API to not rely on `UnityEditor` namespace (+ allow assembly to build on any platform)
 * [ ] Decouple the backing API to not rely on `UnityEngine` namespace
 * [ ] Other `SearchDropdownWindow` versions for other frameworks
