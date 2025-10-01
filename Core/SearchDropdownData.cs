@@ -147,7 +147,7 @@ namespace BX.Editor
         /// Called when the dropdown is discarded.
         /// (No element selection intent was specified and the dropdown closed)
         /// </summary>
-        public event Action OnDiscardEvent;
+        public event Action OnDiscard;
 
         /// <summary>
         /// Invokes the <see cref="OnElementSelected"/>
@@ -157,11 +157,11 @@ namespace BX.Editor
             OnElementSelected?.Invoke(element);
         }
         /// <summary>
-        /// Invokes the <see cref="OnDiscardEvent"/>
+        /// Invokes the <see cref="OnDiscard"/>
         /// </summary>
         protected void InvokeOnDiscardEvent()
         {
-            OnDiscardEvent?.Invoke();
+            OnDiscard?.Invoke();
         }
     }
 }
