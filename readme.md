@@ -234,7 +234,7 @@ public class SampleTargetPropertyDrawer : PropertyDrawer
                     copySetProperty.Dispose();
                     copySo.Dispose();
                 };
-                selector.OnDiscardEvent += () =>
+                selector.OnDiscard += () =>
                 {
                     copySetProperty.Dispose();
                     copySo.Dispose();
